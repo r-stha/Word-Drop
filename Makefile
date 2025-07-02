@@ -1,23 +1,26 @@
-SOURCES = main.cpp
-
+# List of source files
+SOURCES = main.cpp game.cpp menu.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
-
-INCLUDE = include/
-LIB = lib/
-
-CXXFLAGS = -I $(INCLUDE)
-LDFLAGS = -L $(LIB) -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32 -lwinmm 
-
 TARGET = main.exe
 
-default: $(TARGET)
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -I include
+LDFLAGS = -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32 -lwinmm
+
+# Default target: Build and run
+all: $(TARGET)
+	@echo Running the game...
 	@./$(TARGET)
 
+# Build executable
 $(TARGET): $(OBJECTS)
-	@g++ $^ -o $@ $(LDFLAGS)
+	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
+# Compile .cpp to .o
 %.o: %.cpp
-	@g++ -c $< -o $@ $(CXXFLAGS)
+	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
+# Clean
 clean:
-	@del $(OBJECTS) $(TARGET)
+	del /Q *.o *.exe 2>nul || true
