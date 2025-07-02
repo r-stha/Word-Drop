@@ -29,9 +29,7 @@ struct HighScore
 
 vector<HighScore> highScores;
 
-vector<string> dictionary = {
-    "apple", "code", "game", "fast", "hello",
-    "world", "type", "keyboard", "speed", "skill"};
+vector<string> dictionary;
 
 vector<Word> words;
 string typed = "";
@@ -42,6 +40,18 @@ bool showCursor = true;
 bool paused = false;
 bool gameOver = false;
 bool restartRequested = false;
+
+void loadWordsFromFile(const string& filename) {
+    ifstream fin(filename);
+    string word;
+    dictionary.clear();
+    while (getline(fin, word)) {
+        if (!word.empty()) {
+            dictionary.push_back(word);
+        }
+    }
+    fin.close();
+}
 
 void loadHighScores()
 {
@@ -145,8 +155,8 @@ void removeMatchedWord()
     {
         if (word.active && word.text == typed)
         {
-            word.active = false;
             playSound("resources/correct.wav"); // after scoring
+            word.active = false;
             score++;
             words.erase(words.begin() + idx); // remove matched word
             if (health < 5)                   // Prevent health from exceeding max
@@ -281,6 +291,7 @@ void handleTyping()
 
 int main()
 {
+    loadWordsFromFile("words.txt"); 
     srand(time(0));
     initwindow(screenWidth, screenHeight, (char *)"Typing Speed Game");
     setbkcolor(BLACK);                        // black background
@@ -303,6 +314,9 @@ int main()
                 spawnNewWords();
                 updateSpeed();
                 frameCount++;
+                if (frameCount % 10 == 0) { // toggle every ~0.5 seconds (10 × 50ms delay)
+                    showCursor = !showCursor;
+                }
             }
             else
             {
