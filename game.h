@@ -1,5 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
+#pragma once
 
 void runGame();           // starts the game
 int showHighScores();   

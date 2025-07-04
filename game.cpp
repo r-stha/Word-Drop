@@ -293,9 +293,10 @@ void playOpeningTransition() {
 
 void runGame()
 {
+    cleardevice();
     loadWordsFromFile("file/words.txt"); 
     srand(time(0));
-    initwindow(screenWidth, screenHeight, (char *)"Typing Speed Game");
+    // initwindow(screenWidth, screenHeight, (char *)"Typing Speed Game");
     setbkcolor(BLACK);                        // black background
     setcolor(WHITE);                          // white text
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2); // readable size
@@ -383,5 +384,5 @@ void runGame()
 
     } while (restartRequested);
 
-    closegraph();
+    // closegraph();
 }
