@@ -1,6 +1,6 @@
 # List of source files
 SOURCES = main.cpp game.cpp menu.cpp
-OBJECTS = $(SOURCES:.cpp=.o)
+OBJECTS = $(SOURCES:.cpp=.o) resource.o
 TARGET = main.exe
 
 # Compiler and flags
@@ -20,6 +20,10 @@ $(TARGET): $(OBJECTS)
 # Compile .cpp to .o
 %.o: %.cpp
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
+
+# Compile resource file
+resource.o: resource.rc
+	windres $< -o $@
 
 # Clean
 clean:
