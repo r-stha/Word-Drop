@@ -4,6 +4,7 @@
 
 enum GameState { MENU, PLAYING, HIGHSCORES, INSTRUCTIONS, EXIT };
 
+void splashScreen();  // function to display the splash screen
 void drawMenu();  // function to draw the menu
 void showMenu();  // function to display the menu and call game if needed
 void showInstructions(); // function to display game instructions

@@ -1,7 +1,55 @@
 #include <graphics.h>
 #include <conio.h>
+#include <windows.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
+#include <string>
 #include "menu.h"
 #include "game.h"
+
+void splashScreen() {
+    cleardevice();
+    setbkcolor(BLACK);
+    setcolor(LIGHTCYAN);
+    settextstyle(BOLD_FONT, HORIZ_DIR, 5);  // big text
+    const char* title = "Typing Speed Challenge";
+    int x = 100, y = 200;
+    std::string typed = "";
+
+    // Typing animation
+    for (int i = 0; title[i] != '\0'; i++) {
+        typed += title[i];
+        cleardevice();
+        outtextxy(x, y, (char*)typed.c_str());
+        PlaySound(TEXT("resources/keyboard_typing.wav"), NULL, SND_FILENAME | SND_SYNC);
+        delay(120);
+    }
+
+    delay(500);  // small pause before loading bar
+
+    // Loading bar
+    settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
+    setcolor(WHITE);
+    outtextxy(x + 30, y + 100, (char*)"Loading...");
+
+    int barX = x + 30, barY = y + 130;
+    for (int i = 0; i <= 300; i += 10) {
+        setfillstyle(SOLID_FILL, GREEN);
+        bar(barX, barY, barX + i, barY + 20);
+        delay(50);
+    }
+
+    delay(400);
+    cleardevice();
+
+    // Final instruction
+    // settextstyle(BOLD_FONT, HORIZ_DIR, 3);
+    // setcolor(LIGHTGREEN);
+    // outtextxy(800 / 2 - 150, 600 / 2, (char*)"Press any key to start...");
+
+    // while (!kbhit()) delay(10);  // Wait for key press
+    // getch(); // Consume the key
+}
 
 void drawMenu() {
     // cleardevice();
@@ -39,6 +87,17 @@ void showMenu() {
     loadHighScores();  // from game.cpp
     GameState state = MENU;
     initwindow(800, 600, (char*)"Typing Speed Game");
+    
+    HWND hwnd = GetForegroundWindow();
+    HICON hIcon = (HICON)LoadImage(NULL, "resources/icon.ico", IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
+    if (hIcon)
+    {
+        SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+    }
+
+    splashScreen();  // Show the splash screen before the menu
+
     while (state != EXIT) {
         if (state == MENU) {
             readimagefile("resources/menu_background.bmp", 0, 0, 800, 600);
