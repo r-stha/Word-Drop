@@ -7,6 +7,7 @@ void loadHighScores();
 void saveHighScores();
 // void insertHighScore(const string &name, int score);
 void playSound(const char *filename);
+void stopSound();
 void drawHUD(); // draws the HUD with score, health, and typed text
 void drawWords(); // draws the falling words on the screen
 void removeMatchedWord(); // removes matched word from the screen

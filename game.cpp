@@ -102,6 +102,10 @@ void playSound(const char *filename)
     PlaySoundA(filename, NULL, SND_FILENAME | SND_ASYNC);
 }
 
+void stopSound() {
+    PlaySoundA(NULL, 0, 0);
+}
+
 string getRandomWord()
 {
     return dictionary[rand() % dictionary.size()];
@@ -159,6 +163,7 @@ void drawWords()
     }
 }
 
+//no need of this function
 void removeMatchedWord()
 {
     for (int i = words.size() - 1; i >= 0; --i) {
@@ -177,11 +182,36 @@ void removeMatchedWord()
     typed = ""; // Clear typed text on mismatch
 }
 
+// Returns true if `typed` is a prefix of `w`
+bool isPrefix(const string& typed, const string& w)
+{
+    return w.size() >= typed.size() &&
+           equal(typed.begin(), typed.end(), w.begin());
+}
+
+// Returns the index of a word that exactly matches `typed`, –1 if none
+int findExactMatch(const string& typed)
+{
+    for (int i = 0; i < (int)words.size(); ++i)
+        if (words[i].active && words[i].text == typed)
+            return i;
+    return -1;
+}
+
+void acceptWord(int index)
+{
+    playSound("resources/correct.wav");
+    score++;
+    if (health < 5) health++;          // reward a life
+    words.erase(words.begin() + index);
+    typed.clear();
+}
+
 Word createWord()
 {
     Word newWord;
     newWord.text = getRandomWord();
-    newWord.x = 100 + rand() % (screenWidth - 170);
+    newWord.x = 100 + rand() % (screenWidth - 190);
     int color = 1 + rand() % 14; // Random color from 1 to 14
     newWord.color = color;
     newWord.y = 0;
@@ -267,30 +297,55 @@ void showGameOverScreen()
 
 void handleTyping()
 {
-    if (kbhit())
+    while (kbhit())           // read *all* queued keys
     {
         char ch = getch();
-        if (ch == ' ')
-            paused = !paused;
-        else if ((ch == 'r' || ch == 'R') && gameOver)
-            restartRequested = true;
-        else if (ch == 27)
-            exit(0);
-        if (!paused && !gameOver)
-        {
-            if (ch == '\b' && !typed.empty())
-                typed.pop_back();
-            else if (ch == '\r')
-                removeMatchedWord();
-            else if (isalpha(ch))
-                typed += ch;
+
+        // global hot‑keys first
+        if (ch == ' ') { paused = !paused; continue; }
+        if (ch == 27)  { exit(0); }          // ESC
+        if ((ch == 'r' || ch == 'R') && gameOver) {
+            restartRequested = true; continue;
+        }
+
+        if (paused || gameOver) continue;    // ignore other keys
+
+        /* --- text input --- */
+        if (ch == '\b') {                    // back‑space
+            if (!typed.empty()) typed.pop_back();
+        }
+        else if (isalpha(ch)) {
+            typed += ch;
+        }
+
+        /* --- real‑time checking --- */
+
+        // 3‑a) exact word finished?
+        int idx = findExactMatch(typed);
+        if (idx != -1) {                     // typed matches a word
+            acceptWord(idx);
+            continue;
+        }
+
+        // 3‑b) still a prefix of at least one word?
+        bool stillValid = false;
+        for (auto& w : words)
+            if (w.active && isPrefix(typed, w.text)) {
+                stillValid = true;
+                break;
+            }
+
+        if (!stillValid && !typed.empty()) { // typed can never match
+            playSound("resources/wrong.wav");
+            health--;
+            typed.clear();
         }
     }
 }
 
 void playOpeningTransition()
 {
-    int currentPage = 0;
+    // int currentPage = 0;
 
     for (int i = 0; i < screenWidth; i += 20) {
         setactivepage(currentPage);
@@ -315,6 +370,10 @@ void runGame()
 {
     cleardevice();
     loadWordsFromFile("file/words.txt");
+    void* bgBuffer = malloc(imagesize(0, 0, screenWidth, screenHeight));
+    readimagefile("resources/background.bmp", 0, 0, screenWidth, screenHeight);
+    getimage(0, 0, screenWidth, screenHeight, bgBuffer);
+
     srand(time(0));
     setbkcolor(BLACK);                        // black background
     setcolor(WHITE);                          // white text
@@ -328,14 +387,14 @@ void runGame()
         {
             setactivepage(currentPage);     // Draw to this page
             setvisualpage(1 - currentPage); // Display the other page
-            cleardevice();
+            putimage(0, 0, bgBuffer, COPY_PUT);
 
             handleTyping();
 
             if (!paused && !gameOver)
             {
                 // cleardevice();
-                readimagefile("resources/background.bmp", 0, 0, screenWidth, screenHeight);
+                
                 drawHUD();
                 drawWords();
                 spawnNewWords();
@@ -415,6 +474,6 @@ void runGame()
         }
 
     } while (restartRequested);
-
+    free(bgBuffer);
     closegraph();
 }
