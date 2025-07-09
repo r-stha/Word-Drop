@@ -212,7 +212,7 @@ Word createWord()
     Word newWord;
     newWord.text = getRandomWord();
     newWord.x = 100 + rand() % (screenWidth - 190);
-    int color = 1 + rand() % 14; // Random color from 1 to 14
+    int color = 2 + rand() % 14; // Random color from 1 to 14
     newWord.color = color;
     newWord.y = 0;
     newWord.active = true;
@@ -221,7 +221,7 @@ Word createWord()
 
 void spawnNewWords()
 {
-    if (frameCount % 50 == 0 || words.size() <= 2)
+    if (frameCount % 50 == 0)
     { // spawn a new word every 50 frames
         if (words.size() >= 8)
             return; // limit to 10 active
@@ -377,7 +377,7 @@ void runGame()
     srand(time(0));
     setbkcolor(BLACK);                        // black background
     setcolor(WHITE);                          // white text
-    settextstyle(DEFAULT_FONT, HORIZ_DIR, 2); // readable size
+    settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2); // readable size
 
     do
     {

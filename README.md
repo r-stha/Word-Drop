@@ -21,10 +21,10 @@
 | Key                  | Action                          |
 |----------------------|---------------------------------|
 | Type letters         | Build the current word          |
-| `Enter`              | Submit the typed word           |
 | `Backspace`          | Delete last typed character     |
 | `Space`              | Pause / Resume the game         |
 | `R`                  | Restart the game after Game Over|
+| `Esc`                | Quit the game                   |
 
 ---
 

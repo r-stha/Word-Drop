@@ -1,5 +1,2 @@
 /main.exe
-/main.o
-/menu.o
-/game.o
-/resources.o
+*.o
