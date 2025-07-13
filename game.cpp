@@ -46,6 +46,10 @@ bool showCursor = true;
 bool paused = false;
 bool gameOver = false;
 bool restartRequested = false;
+int totalKeystrokes = 0;
+int correctKeystrokes = 0;
+int longestStrick = 0;
+int currentStrick = 0;
 
 void loadWordsFromFile(const string &filename)
 {
@@ -111,6 +115,16 @@ string getRandomWord()
     return dictionary[rand() % dictionary.size()];
 }
 
+int countMatchingPrefix(const std::string& typed, const std::string& actual) {
+    int len = std::min(typed.size(), actual.size());
+    for (int i = 0; i < len; ++i) {
+        if (tolower(typed[i]) != tolower(actual[i])) {
+            return i; // mismatch happened here
+        }
+    }
+    return len; // all typed chars match
+}
+
 void drawHUD()
 {
     setcolor(WHITE);
@@ -145,23 +159,54 @@ void drawHUD()
 
 void drawWords()
 {
-    for (int i = words.size() - 1; i >= 0; --i) {
-        if (words[i].active) {
-            words[i].y += fallSpeed;
+    settextstyle(BOLD_FONT, HORIZ_DIR, 3);
+    for (int i = words.size() - 1; i >= 0; --i)
+    {
+        if (!words[i].active) continue;
+        words[i].y += fallSpeed;
 
-            setcolor(DARKGRAY);
-            outtextxy(words[i].x + 2, words[i].y + 2, const_cast<char *>(words[i].text.c_str()));
+        string full = words[i].text;
+        int matchLen = countMatchingPrefix(typed, full);
+
+        int x = words[i].x;
+        int y = words[i].y;
+
+        // Shadow
+        setcolor(DARKGRAY);
+        outtextxy(x + 2, y + 2, const_cast<char *>(full.c_str()));
+
+        // Draw matching prefix in highlight (YELLOW)
+        if (matchLen > 0)
+        {
+            string matched = full.substr(0, matchLen);
+            setcolor(YELLOW);
+            outtextxy(x, y, const_cast<char *>(matched.c_str()));
+
+            // Measure the width of matched text
+            int prefixWidth = textwidth(const_cast<char *>(matched.c_str()));
+
+            // Draw the rest in the word's original color
+            string rest = full.substr(matchLen);
             setcolor(words[i].color);
-            outtextxy(words[i].x, words[i].y, const_cast<char *>(words[i].text.c_str()));
+            outtextxy(x + prefixWidth, y, const_cast<char *>(rest.c_str()));
+        }
+        else
+        {
+            // No match at all, draw full word in original color
+            setcolor(words[i].color);
+            outtextxy(x, y, const_cast<char *>(full.c_str()));
+        }
 
-            if (words[i].y >= screenHeight - 20) {
-                playSound("resources/wrong.wav");
-                health--;
-                words.erase(words.begin() + i);
-            }
+        // Missed word
+        if (words[i].y >= screenHeight - 20)
+        {
+            playSound("resources/wrong.wav");
+            health--;
+            words.erase(words.begin() + i);
         }
     }
 }
+
 
 //no need of this function
 void removeMatchedWord()
@@ -202,6 +247,7 @@ void acceptWord(int index)
 {
     playSound("resources/correct.wav");
     score++;
+    currentStrick++;
     if (health < 5) health++;          // reward a life
     words.erase(words.begin() + index);
     typed.clear();
@@ -221,7 +267,7 @@ Word createWord()
 
 void spawnNewWords()
 {
-    if (frameCount % 50 == 0)
+    if (frameCount % 50 == 0 || words.empty())
     { // spawn a new word every 50 frames
         if (words.size() >= 8)
             return; // limit to 10 active
@@ -252,23 +298,28 @@ void resetGame()
     paused = false;
     gameOver = false;
     restartRequested = false;
+    correctKeystrokes = 0;
+    totalKeystrokes = 0;
 }
 
 void showPauseScreen()
 {
+    // std::cout << "currentStrick: " << currentStrick << std::endl;
+    // std::cout << "longestStrick: " << longestStrick << std::endl;
     setcolor(LIGHTBLUE);
     settextstyle(BOLD_FONT, HORIZ_DIR, 3);
-    outtextxy(screenWidth / 2 - 120, screenHeight / 2, (char *)"PAUSED");
+    outtextxy(screenWidth / 2 - 80, screenHeight / 2, (char *)"PAUSED");
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
     outtextxy(screenWidth / 2 - 140, screenHeight / 2 + 40, (char *)"Press 'Space' to Resume");
 }
 
 int showHighScores()
 {
-    setcolor(RED);
-    settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
+    setcolor(YELLOW);
+    settextstyle(DEFAULT_FONT, HORIZ_DIR, 3);
     outtextxy(screenWidth / 2 - 150, 160, (char *)"High Scores:");
 
+    settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
     int y = 190;
     for (auto &entry : highScores)
     {
@@ -283,8 +334,8 @@ int showHighScores()
 void showGameOverScreen()
 {
     setcolor(RED);
-    settextstyle(BOLD_FONT, HORIZ_DIR, 3);
-    outtextxy(screenWidth / 2 - 100, 100, (char *)"GAME OVER");
+    settextstyle(BOLD_FONT, HORIZ_DIR, 5);
+    outtextxy(screenWidth / 2 - 150, 100, (char *)"!!!GAME OVER!!!");
 
     int y = showHighScores();
 
@@ -292,7 +343,25 @@ void showGameOverScreen()
     sprintf(buffer, "Your Score: %d", score);
     outtextxy(screenWidth / 2 - 150, y + 20, buffer);
 
-    outtextxy(screenWidth / 2 - 150, y + 60, (char *)"Press 'R' to Restart");
+    float accuracy = 0;
+    if(totalKeystrokes > 0)
+        accuracy = (correctKeystrokes * 100.0f) / totalKeystrokes;
+    
+    if(accuracy > 90)
+        setcolor(GREEN);
+    else if(accuracy > 70)
+        setcolor(YELLOW);
+    else
+        setcolor(RED);
+
+    sprintf(buffer, "Accuracy: %.2f%%", accuracy);
+    outtextxy(screenWidth / 2 - 150, y + 60, buffer);
+
+    setcolor(YELLOW);
+    sprintf(buffer, "Longest Strick: %d words%", longestStrick);
+    outtextxy(screenWidth / 2 - 150, y + 100, buffer);
+
+    outtextxy(screenWidth / 2 - 150, y + 140, (char *)"Press 'R' to Restart");
 }
 
 void handleTyping()
@@ -300,7 +369,6 @@ void handleTyping()
     while (kbhit())           // read *all* queued keys
     {
         char ch = getch();
-
         // global hot‑keys first
         if (ch == ' ') { paused = !paused; continue; }
         if (ch == 27)  { exit(0); }          // ESC
@@ -314,7 +382,8 @@ void handleTyping()
         if (ch == '\b') {                    // back‑space
             if (!typed.empty()) typed.pop_back();
         }
-        else if (isalpha(ch)) {
+        else if (isalpha(ch)) {            
+            totalKeystrokes++;    // count every keystroke
             typed += ch;
         }
 
@@ -323,6 +392,7 @@ void handleTyping()
         // 3‑a) exact word finished?
         int idx = findExactMatch(typed);
         if (idx != -1) {                     // typed matches a word
+            correctKeystrokes += typed.length(); // count correct keystrokes
             acceptWord(idx);
             continue;
         }
@@ -336,7 +406,17 @@ void handleTyping()
             }
 
         if (!stillValid && !typed.empty()) { // typed can never match
+            for (auto& w : words) {
+                if (w.active) {
+                    int matchLen = countMatchingPrefix(typed, w.text);
+                    correctKeystrokes += matchLen;
+                    break; // only apply to first matching word
+                }
+            }
+
             playSound("resources/wrong.wav");
+            longestStrick = currentStrick > longestStrick ? currentStrick : longestStrick;
+            currentStrick = 0; // reset current streak
             health--;
             typed.clear();
         }

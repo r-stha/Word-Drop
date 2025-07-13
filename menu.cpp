@@ -74,12 +74,11 @@ void showInstructions() {
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
     outtextxy(50, 160, (char*)"1. Type words that fall from the top of the screen.");
     outtextxy(50, 190, (char*)"2. Press 'Space' to pause the game.");
-    outtextxy(50, 220, (char*)"3. Press 'Enter' to submit your typed word.");
-    outtextxy(50, 250, (char*)"4. Avoid letting words reach the bottom of the screen.");
-    outtextxy(50, 280, (char*)"5. Your score increases with each correct word typed.");
-    outtextxy(50, 310, (char*)"6. Your health increases with five correct word typed.");
-    outtextxy(50, 340, (char*)"7. Try to achieve a high score!");
-    outtextxy(50, 370, (char*)"     Press any key to return to the menu.");    
+    outtextxy(50, 220, (char*)"4. Avoid letting words reach the bottom of the screen.");
+    outtextxy(50, 250, (char*)"5. Your score increases with each correct word typed.");
+    outtextxy(50, 280, (char*)"6. Your health increases with correct word typed.");
+    outtextxy(50, 310, (char*)"7. Try to achieve a high score!");
+    outtextxy(50, 340, (char*)"     Press any key to return to the menu.");    
 }
 
 void showMenu() {
@@ -100,8 +99,8 @@ void showMenu() {
         SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
     }
 
-    // splashScreen();  // Show the splash screen before the menu
-    playSound("resources/menu_music.wav");  // Play background music
+    splashScreen();  // Show the splash screen before the menu
+    PlaySound(TEXT("resources/menu_music.wav"), NULL, SND_FILENAME | SND_LOOP | SND_ASYNC);  // Play background music
     while (state != EXIT) {
         if (state == MENU) {
             putimage(0, 0, bgBuffer, COPY_PUT);
