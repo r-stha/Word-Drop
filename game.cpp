@@ -258,7 +258,7 @@ Word createWord()
     Word newWord;
     newWord.text = getRandomWord();
     newWord.x = 100 + rand() % (screenWidth - 190);
-    int color = 2 + rand() % 14; // Random color from 1 to 14
+    int color = allowedColors[rand() % (sizeof(allowedColors) / sizeof(allowedColors[0]))];
     newWord.color = color;
     newWord.y = 0;
     newWord.active = true;
