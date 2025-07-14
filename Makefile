@@ -6,7 +6,7 @@ TARGET = main.exe
 # Compiler and flags
 CXX = g++
 CXXFLAGS = -I include
-LDFLAGS = -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32 -lwinmm
+LDFLAGS = -lbgi -lgdi32 -lcomdlg32 -luuid -loleaut32 -lole32 -lwinmm -mwindows
 
 # Default target: Build and run
 all: $(TARGET)

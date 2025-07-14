@@ -15,6 +15,11 @@
 
 using namespace std;
 
+int allowedColors[] = {
+    GREEN, CYAN, RED, MAGENTA, BROWN, LIGHTGRAY,
+    DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, WHITE
+};
+
 struct Word
 {
     string text;
@@ -450,15 +455,23 @@ void runGame()
 {
     cleardevice();
     loadWordsFromFile("file/words.txt");
-    void* bgBuffer = malloc(imagesize(0, 0, screenWidth, screenHeight));
-    readimagefile("resources/background.bmp", 0, 0, screenWidth, screenHeight);
-    getimage(0, 0, screenWidth, screenHeight, bgBuffer);
+
+    const int totalFrames = 30; // update based on how many frames you extracted
+    std::vector<void*> bgFrames;
+
+    for (int i = 0; i < totalFrames; ++i) {
+        char filename[100];
+        sprintf(filename, "resources/frames/frame_%03d.bmp", i);
+        readimagefile(filename, 0, 0, screenWidth, screenHeight);
+        void* frame = malloc(imagesize(0, 0, screenWidth, screenHeight));
+        getimage(0, 0, screenWidth, screenHeight, frame);
+        bgFrames.push_back(frame);
+    }
 
     srand(time(0));
     setbkcolor(BLACK);                        // black background
     setcolor(WHITE);                          // white text
     settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2); // readable size
-
     do
     {
         resetGame();
@@ -467,7 +480,8 @@ void runGame()
         {
             setactivepage(currentPage);     // Draw to this page
             setvisualpage(1 - currentPage); // Display the other page
-            putimage(0, 0, bgBuffer, COPY_PUT);
+            int currentFrame = (frameCount / 2) % totalFrames;
+            putimage(0, 0, bgFrames[currentFrame], COPY_PUT);
 
             handleTyping();
 
@@ -554,6 +568,8 @@ void runGame()
         }
 
     } while (restartRequested);
-    free(bgBuffer);
+    for (auto frame : bgFrames) {
+        free(frame);
+    }
     closegraph();
 }

@@ -12,19 +12,17 @@ void splashScreen() {
     setbkcolor(BLACK);
     setcolor(LIGHTCYAN);
     settextstyle(BOLD_FONT, HORIZ_DIR, 5);  // big text
-    const char* title = "Typing Speed Challenge";
+     char* title = (char*)"Typing Speed Challenge";
     int x = 100, y = 200;
     std::string typed = "";
-
+    PlaySound(TEXT("resources/keyboard_typing.wav"), NULL, SND_FILENAME | SND_ASYNC);
     // Typing animation
     for (int i = 0; title[i] != '\0'; i++) {
         typed += title[i];
         cleardevice();
         outtextxy(x, y, (char*)typed.c_str());
-        PlaySound(TEXT("resources/keyboard_typing.wav"), NULL, SND_FILENAME | SND_SYNC);
         delay(120);
     }
-
     delay(500);  // small pause before loading bar
 
     // Loading bar

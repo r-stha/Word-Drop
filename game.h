@@ -2,15 +2,8 @@
 #define GAME_H
 #pragma once
 
-int allowedColors[] = {
-    BLACK, GREEN, CYAN, RED, MAGENTA, BROWN, LIGHTGRAY,
-    DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, WHITE
-};
-
-// void loadWordsFromFile(const string& filename);
 void loadHighScores();
 void saveHighScores();
-// void insertHighScore(const string &name, int score);
 void playSound(const char *filename);
 void stopSound();
 void drawHUD(); // draws the HUD with score, health, and typed text
