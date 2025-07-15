@@ -50,12 +50,11 @@ void splashScreen() {
 }
 
 void drawMenu() {
-    // cleardevice();
-    // setbkcolor(BLACK);
-    setcolor(WHITE);
+    setcolor(GREEN);
     settextstyle(BOLD_FONT, HORIZ_DIR, 4);
-    outtextxy(200, 100, (char*)"TYPING SPEED GAME");
+    outtextxy(220, 150, (char*)"TYPING SPEED GAME");
 
+    setcolor(WHITE);
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
     outtextxy(250, 200, (char*)"1. Start Game");
     outtextxy(250, 240, (char*)"2. High Scores");

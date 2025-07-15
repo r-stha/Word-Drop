@@ -336,25 +336,38 @@ int showHighScores()
     return y;
 }
 
-void showGameOverScreen()
+void showGameOverScreen(void* gameOverBg)
 {
+    // Load and show background image
+    putimage(0, 0, gameOverBg, COPY_PUT);
+
+    // Draw translucent overlay (optional for text visibility)
+    setfillstyle(SOLID_FILL, BLACK);
+    setcolor(BLACK);
+    bar(50, 80, screenWidth - 50, screenHeight - 80);  // Semi-transparent feel
+
+    setbkcolor(BLACK);  // Set text background to black for clarity
+
+    // GAME OVER Text
     setcolor(RED);
     settextstyle(BOLD_FONT, HORIZ_DIR, 5);
-    outtextxy(screenWidth / 2 - 150, 100, (char *)"!!!GAME OVER!!!");
+    outtextxy(screenWidth / 2 - 150, 100, (char *)"!!! GAME OVER !!!");
 
-    int y = showHighScores();
+    int y = showHighScores();  // displays top scores
 
+    // Score
     char buffer[100];
     sprintf(buffer, "Your Score: %d", score);
     outtextxy(screenWidth / 2 - 150, y + 20, buffer);
 
+    // Accuracy
     float accuracy = 0;
-    if(totalKeystrokes > 0)
+    if (totalKeystrokes > 0)
         accuracy = (correctKeystrokes * 100.0f) / totalKeystrokes;
-    
-    if(accuracy > 90)
+
+    if (accuracy > 90)
         setcolor(GREEN);
-    else if(accuracy > 70)
+    else if (accuracy > 70)
         setcolor(YELLOW);
     else
         setcolor(RED);
@@ -362,10 +375,12 @@ void showGameOverScreen()
     sprintf(buffer, "Accuracy: %.2f%%", accuracy);
     outtextxy(screenWidth / 2 - 150, y + 60, buffer);
 
+    // Longest Streak
     setcolor(YELLOW);
-    sprintf(buffer, "Longest Strick: %d words%", longestStrick);
+    sprintf(buffer, "Longest Streak: %d words", longestStrick);
     outtextxy(screenWidth / 2 - 150, y + 100, buffer);
 
+    // Restart message
     outtextxy(screenWidth / 2 - 150, y + 140, (char *)"Press 'R' to Restart");
 }
 
@@ -456,6 +471,10 @@ void runGame()
     cleardevice();
     loadWordsFromFile("file/words.txt");
 
+    void* gameOverBg = malloc(imagesize(0, 0, screenWidth, screenHeight));
+    readimagefile("resources/game_over.bmp", 0, 0, screenWidth, screenHeight);
+    getimage(0, 0, screenWidth, screenHeight, gameOverBg);
+
     const int totalFrames = 30; // update based on how many frames you extracted
     std::vector<void*> bgFrames;
 
@@ -486,9 +505,7 @@ void runGame()
             handleTyping();
 
             if (!paused && !gameOver)
-            {
-                // cleardevice();
-                
+            {                
                 drawHUD();
                 drawWords();
                 spawnNewWords();
@@ -510,7 +527,7 @@ void runGame()
                 }
                 else if (gameOver)
                 {
-                    showGameOverScreen();
+                    showGameOverScreen(gameOverBg);
                 }
             }
 
