@@ -341,17 +341,8 @@ void showGameOverScreen(void* gameOverBg)
     // Load and show background image
     putimage(0, 0, gameOverBg, COPY_PUT);
 
-    // Draw translucent overlay (optional for text visibility)
-    setfillstyle(SOLID_FILL, BLACK);
-    setcolor(BLACK);
-    bar(50, 80, screenWidth - 50, screenHeight - 80);  // Semi-transparent feel
-
-    setbkcolor(BLACK);  // Set text background to black for clarity
-
-    // GAME OVER Text
     setcolor(RED);
     settextstyle(BOLD_FONT, HORIZ_DIR, 5);
-    outtextxy(screenWidth / 2 - 150, 100, (char *)"!!! GAME OVER !!!");
 
     int y = showHighScores();  // displays top scores
 
@@ -379,7 +370,7 @@ void showGameOverScreen(void* gameOverBg)
     setcolor(YELLOW);
     sprintf(buffer, "Longest Streak: %d words", longestStrick);
     outtextxy(screenWidth / 2 - 150, y + 100, buffer);
-
+    
     // Restart message
     outtextxy(screenWidth / 2 - 150, y + 140, (char *)"Press 'R' to Restart");
 }
@@ -445,25 +436,37 @@ void handleTyping()
 
 void playOpeningTransition()
 {
-    // int currentPage = 0;
+    // Prepare background buffer
+    void* bgBuffer = malloc(imagesize(0, 0, screenWidth, screenHeight));
+    readimagefile("resources/background.bmp", 0, 0, screenWidth, screenHeight);
+    getimage(0, 0, screenWidth, screenHeight, bgBuffer);
 
-    for (int i = 0; i < screenWidth; i += 20) {
+    // Start with black screen
+    setbkcolor(BLACK);
+    cleardevice();
+
+    const int barHeight = 20;
+
+    for (int i = screenHeight; i >= 0; i -= barHeight) {
         setactivepage(currentPage);
         setvisualpage(1 - currentPage);
 
-        cleardevice();
-        for (int j = 0; j <= i; j += 20) {
-            setfillstyle(SOLID_FILL, LIGHTCYAN);
-            bar(j, 0, j + 20, screenHeight);
-        }
+        putimage(0, 0, bgBuffer, COPY_PUT);  // draw full background
 
-        delay(10);
+        // draw black bars from bottom upwards
+        setfillstyle(SOLID_FILL, BLACK);
+        bar(0, i, screenWidth, screenHeight);
+
+        delay(20);
         currentPage = 1 - currentPage;
     }
 
-    // After transition, show final frame
+    // Show final full frame
     setactivepage(0);
     setvisualpage(0);
+    putimage(0, 0, bgBuffer, COPY_PUT);
+
+    free(bgBuffer);
 }
 
 void runGame()
@@ -518,7 +521,6 @@ void runGame()
             }
             else
             {
-                // cleardevice();
                 drawHUD();
 
                 if (paused)

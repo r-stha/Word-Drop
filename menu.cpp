@@ -11,143 +11,233 @@ void splashScreen() {
     cleardevice();
     setbkcolor(BLACK);
     setcolor(LIGHTCYAN);
-    settextstyle(BOLD_FONT, HORIZ_DIR, 5);  // big text
-     char* title = (char*)"Typing Speed Challenge";
-    int x = 100, y = 200;
+    settextstyle(BOLD_FONT, HORIZ_DIR, 5);
+
+    const char* title = "Typing Speed Challenge";
+    int x = 800 / 2 - 300;
+    int y = 600 / 2 - 80;
+
     std::string typed = "";
+
     PlaySound(TEXT("resources/keyboard_typing.wav"), NULL, SND_FILENAME | SND_ASYNC);
-    // Typing animation
+
+    // Typing effect with fade glow
     for (int i = 0; title[i] != '\0'; i++) {
         typed += title[i];
-        cleardevice();
-        outtextxy(x, y, (char*)typed.c_str());
-        delay(120);
+        // cleardevice();
+        setcolor(LIGHTCYAN);
+        for (int glow = 0; glow < 3; glow++) {
+            outtextxy(x - glow, y - glow, (char*)typed.c_str());
+            outtextxy(x + glow, y + glow, (char*)typed.c_str());
+        }
+        delay(100);
     }
-    delay(500);  // small pause before loading bar
 
-    // Loading bar
+    delay(500);
+
+    // Loading text
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
     setcolor(WHITE);
-    outtextxy(x + 30, y + 100, (char*)"Loading...");
+    outtextxy(800 / 2 - 50, y + 80, (char*)"Loading...");
 
-    int barX = x + 30, barY = y + 130;
+    // Loading bar with animation glow
+    int barX = 800 / 2 - 150;
+    int barY = y + 110;
     for (int i = 0; i <= 300; i += 10) {
-        setfillstyle(SOLID_FILL, GREEN);
+        setfillstyle(SOLID_FILL, i % 30 < 15 ? LIGHTGREEN : GREEN);
         bar(barX, barY, barX + i, barY + 20);
-        delay(50);
+        delay(40);
     }
 
-    delay(400);
+    delay(500);
     cleardevice();
-
-    // Final instruction
-    // settextstyle(BOLD_FONT, HORIZ_DIR, 3);
-    // setcolor(LIGHTGREEN);
-    // outtextxy(800 / 2 - 150, 600 / 2, (char*)"Press any key to start...");
-
-    // while (!kbhit()) delay(10);  // Wait for key press
-    // getch(); // Consume the key
 }
 
-void drawMenu() {
+void drawMenu(int hoverIndex = -1) {
     setcolor(GREEN);
     settextstyle(BOLD_FONT, HORIZ_DIR, 4);
-    outtextxy(220, 150, (char*)"TYPING SPEED GAME");
+    outtextxy(220, 100, (char*)"TYPING SPEED GAME");
 
-    setcolor(WHITE);
-    settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
-    outtextxy(250, 200, (char*)"1. Start Game");
-    outtextxy(250, 240, (char*)"2. High Scores");
-    outtextxy(250, 280, (char*)"3. Instructions");
-    outtextxy(250, 320, (char*)"4. Exit");
+    int x = 250, width = 270, height = 40;
+    int y1 = 180, gap = 50;
+
+    const char* labels[] = {
+        "1. Start Game",
+        "2. High Scores",
+        "3. Instructions",
+        "4. Exit"
+    };
+
+    setfillstyle(SOLID_FILL, BLACK);
+    for (int i = 0; i < 4; ++i) {
+        int y = y1 + i * gap;
+
+        // Change color if hovered
+        if (i == hoverIndex){
+            // setfillstyle(SOLID_FILL, LIGHTRED);
+            setcolor(RED);
+        }
+        else{
+            // setfillstyle(SOLID_FILL, BLUE);
+            setcolor(WHITE);
+        }
+
+        bar(x, y, x + width, y + height);
+
+        // setcolor(WHITE);
+        settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
+        outtextxy(x + 10, y + 10, (char*)labels[i]);
+    }
 }
 
 void showInstructions() {
-    
+    setcolor(GREEN);
+    settextstyle(BOLD_FONT, HORIZ_DIR, 4);
+    outtextxy(250, 80, (char*)"Instructions");
+
     setcolor(WHITE);
-    settextstyle(BOLD_FONT, HORIZ_DIR, 3);
-    outtextxy(250, 130, (char*)" Instructions");
-    
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
-    outtextxy(50, 160, (char*)"1. Type words that fall from the top of the screen.");
-    outtextxy(50, 190, (char*)"2. Press 'Space' to pause the game.");
-    outtextxy(50, 220, (char*)"4. Avoid letting words reach the bottom of the screen.");
-    outtextxy(50, 250, (char*)"5. Your score increases with each correct word typed.");
-    outtextxy(50, 280, (char*)"6. Your health increases with correct word typed.");
-    outtextxy(50, 310, (char*)"7. Try to achieve a high score!");
-    outtextxy(50, 340, (char*)"     Press any key to return to the menu.");    
+    
+    outtextxy(50, 140, (char*)"1. Words will fall from the top of the screen.");
+    outtextxy(50, 170, (char*)"2. Type words before they hit the bottom.");
+    outtextxy(50, 200, (char*)"3. Each correct word increases score/ restores health.");
+    outtextxy(50, 230, (char*)"4. Incorrect typing or missed words reduce health.");
+    outtextxy(50, 260, (char*)"5. Press 'Space' to pause/resume the game.");
+    outtextxy(50, 290, (char*)"6. Try to keep your streak for bonus accuracy stats.");
+    outtextxy(50, 320, (char*)"7. Reach the highest score and show in leaderboard!");
+
+    setcolor(YELLOW);
+    outtextxy(200, 380, (char*)"Press any key to return to the menu...");
 }
 
 void showMenu() {
-    
-    loadHighScores();  // from game.cpp
+    loadHighScores();
     GameState state = MENU;
     initwindow(800, 600, (char*)"Typing Speed Game");
 
     void* bgBuffer = malloc(imagesize(0, 0, 800, 600));
     readimagefile("resources/menu_background.bmp", 0, 0, 800, 600);
     getimage(0, 0, 800, 600, bgBuffer);
-    
+
     HWND hwnd = GetForegroundWindow();
     HICON hIcon = (HICON)LoadImage(NULL, "resources/icon.ico", IMAGE_ICON, 32, 32, LR_LOADFROMFILE);
-    if (hIcon)
-    {
+    if (hIcon) {
         SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
         SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
     }
 
-    splashScreen();  // Show the splash screen before the menu
-    PlaySound(TEXT("resources/menu_music.wav"), NULL, SND_FILENAME | SND_LOOP | SND_ASYNC);  // Play background music
+    splashScreen();
+    PlaySound(TEXT("resources/menu_music.wav"), NULL, SND_FILENAME | SND_LOOP | SND_ASYNC);
+
     while (state != EXIT) {
         if (state == MENU) {
-            putimage(0, 0, bgBuffer, COPY_PUT);
-            drawMenu();
+            int hover = -1, lastHover = -2;
+
+            putimage(0, 0, bgBuffer, COPY_PUT); // draw once
+            drawMenu(hover);
+
             while (1) {
+                bool redraw = false;
+
+                // Mouse movement detection
+                if (ismouseclick(WM_MOUSEMOVE)) {
+                    int mx, my;
+                    getmouseclick(WM_MOUSEMOVE, mx, my);
+
+                    int newHover = -1;
+                    int x = 250, width = 300, height = 40, y1 = 180, gap = 50;
+                    for (int i = 0; i < 4; ++i) {
+                        int y = y1 + i * gap;
+                        if (mx >= x && mx <= x + width && my >= y && my <= y + height) {
+                            newHover = i;
+                            break;
+                        }
+                    }
+
+                    if (newHover != hover) {
+                        hover = newHover;
+                        redraw = true;
+                    }
+                }
+
+                // Redraw only on hover change
+                if (redraw) {
+                    putimage(0, 0, bgBuffer, COPY_PUT);
+                    drawMenu(hover);
+                }
+
+                // Mouse click
+                if (ismouseclick(WM_LBUTTONDOWN)) {
+                    int mx, my;
+                    getmouseclick(WM_LBUTTONDOWN, mx, my);
+
+                    int x = 250, width = 300, height = 40, y1 = 180, gap = 50;
+                    for (int i = 0; i < 4; ++i) {
+                        int y = y1 + i * gap;
+                        if (mx >= x && mx <= x + width && my >= y && my <= y + height) {
+                            state = (GameState)(i + 1);
+                            break;
+                        }
+                    }
+                    if (state != MENU) break;
+                }
+
+                // Keyboard fallback
                 if (kbhit()) {
                     char ch = getch();
-                    if (ch == '1') {
-                        state = PLAYING;
-                        break;
-                    } else if (ch == '2') {
-                        state = HIGHSCORES;
-                        break;
-                    } else if (ch == '3') {
-                        state = INSTRUCTIONS;
-                        break;
-                    } else if (ch == '4') {
-                        state = EXIT;
-                        break;
-                    }else if (ch == 27) {  // ESC key
-                        state = EXIT;
-                        break;
-                    }                    
+                    if (ch == '1') { state = PLAYING; break; }
+                    if (ch == '2') { state = HIGHSCORES; break; }
+                    if (ch == '3') { state = INSTRUCTIONS; break; }
+                    if (ch == '4' || ch == 27) { state = EXIT; break; }
                 }
+
+                delay(30);
             }
         }
 
         if (state == PLAYING) {
             cleardevice();
             free(bgBuffer);
-            stopSound();  // Stop the menu music
+            stopSound();
             runGame();
             state = MENU;
         } else if (state == HIGHSCORES) {
-            // cleardevice();
             putimage(0, 0, bgBuffer, COPY_PUT);
-            int y = showHighScores();  // can be in game.cpp or separate
-            outtextxy(800 / 2 - 150, y + 40, (char*)"Press any key to return to menu");
-            while (!kbhit()) delay(50);
-            getch();  // clear key
+            int y = showHighScores();
+            outtextxy(800 / 2 - 180, y + 40, (char*)"Press any key to return to menu.");
+            outtextxy(800 / 2 - 180, y + 70, (char*)"Or click anywhere to go back.");
+
+            while (true) {
+                if (kbhit()) {
+                    getch();
+                    break;
+                }
+                if (ismouseclick(WM_LBUTTONDOWN)) {
+                    clearmouseclick(WM_LBUTTONDOWN);  // clear the event
+                    break;
+                }
+                delay(50);
+            }
             state = MENU;
         } else if (state == INSTRUCTIONS) {
-            // cleardevice();
             putimage(0, 0, bgBuffer, COPY_PUT);
             showInstructions();
-            while (!kbhit()) delay(50);
-            getch();  // clear key
+
+            while (true) {
+                if (kbhit()) {
+                    getch();
+                    break;
+                }
+                if (ismouseclick(WM_LBUTTONDOWN)) {
+                    clearmouseclick(WM_LBUTTONDOWN);  // clear the event
+                    break;
+                }
+                delay(50);
+            }
             state = MENU;
         }
     }
+
     free(bgBuffer);
     closegraph();
 }
