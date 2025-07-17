@@ -197,9 +197,9 @@ void showMenu() {
 
         if (state == PLAYING) {
             cleardevice();
-            free(bgBuffer);
             stopSound();
-            runGame();
+            showSelectionMenu();
+            PlaySound(TEXT("resources/menu_music.wav"), NULL, SND_FILENAME | SND_LOOP | SND_ASYNC);
             state = MENU;
         } else if (state == HIGHSCORES) {
             putimage(0, 0, bgBuffer, COPY_PUT);
