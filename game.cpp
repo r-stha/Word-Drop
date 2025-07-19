@@ -34,9 +34,7 @@ struct HighScore
 };
 
 vector<HighScore> highScores;
-
 vector<string> dictionary;
-
 vector<Word> words;
 
 string typed = "";
@@ -305,6 +303,14 @@ int showHighScores()
 {
     setcolor(YELLOW);
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 3);
+
+    if(highScores.empty())
+    {
+        outtextxy(screenWidth / 2 - 200, 160, (char *)"No High Scores Yet!");
+        settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
+        return 200; // Return a default y position
+    }
+
     outtextxy(screenWidth / 2 - 150, 160, (char *)"High Scores:");
 
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
@@ -601,102 +607,157 @@ void userInput()
 {
     setcolor(WHITE);
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
-    outtextxy(100, 100, (char *)"Enter your custom sentence (press Enter to finish):");
+    outtextxy(50, 100, (char *)"Enter your custom sentence (press Enter to finish):");
 
     char input[1000];
     int index = 0;
     input[0] = '\0';
 
+    // Layout
+    int startX = 100, startY = 150;
+    int maxWidth = 650;
+    int lineHeight = textheight((char *)"A") + 5;
+    int maxLines = 10;
+
+    int lineCount = 1;
+    int prevIndex = -1; // To track changes
+    bool showCursor = true;
+    int cursorBlinkTimer = 0;
+
+    int lastLineX = startX;
+    int lastLineY = startY;
+
     while (true)
     {
-        char ch = getch();
-
-        if (ch == 13) // Enter key
+        // Handle input
+        if (kbhit())
         {
-            input[index] = '\0';
-            break;
-        }
-        else if (ch == 8 && index > 0) // Backspace
-        {
-            index--;
-            input[index] = '\0';
-        }
-        else if (index < 999 && ch >= 32 && ch <= 126) // Valid character
-        {
-            input[index++] = ch;
-            input[index] = '\0';
-        }
-
-        // Refresh input display
-        setfillstyle(SOLID_FILL, BLACK);
-        bar(90, 140, 750, 300); // Clear old text
-
-        // Multiline text rendering
-        int startX = 100, startY = 150;
-        int x = startX, y = startY;
-        int maxWidth = 700;
-
-        char line[1000] = "";
-        int lineLength = 0;
-
-        x = startX;
-        y = startY;
-        line[0] = '\0';
-
-        for (int i = 0; i <= index; ++i)
-        {
-            line[lineLength] = input[i];
-            line[lineLength + 1] = '\0';
-
-            int textWidth = textwidth(line);
-
-            if (textWidth > maxWidth || input[i] == '\0')
+            char ch = getch();
+            if (ch == 13)
             {
-                if (textWidth > maxWidth)
-                {
-                    line[lineLength] = '\0'; // Remove last char
-                    outtextxy(x, y, line);
+                input[index] = '\0';
+                break;
+            }
+            else if (ch == 8 && index > 0)
+            {
+                index--;
+                input[index] = '\0';
+            }
+            else if (index < 999 && ch >= 32 && ch <= 126)
+            {
+                input[index++] = ch;
+                input[index] = '\0';
+            }
+        }
 
-                    y += textheight(const_cast<char*>("A")) + 5;
-                    line[0] = input[i];
-                    line[1] = '\0';
-                    lineLength = 1;
+        // Check if input changed
+        if (index != prevIndex)
+        {
+            prevIndex = index;
+
+            // Clear full region
+            setfillstyle(SOLID_FILL, BLACK);
+            bar(startX - 12, startY - 12, startX + maxWidth + 12, startY + maxLines * lineHeight + 20);
+
+            // Multiline render
+            int x = startX, y = startY;
+            lineCount = 1;
+            char line[1000] = "";
+            int lineLength = 0;
+
+            for (int i = 0; i <= index; ++i)
+            {
+                line[lineLength] = input[i];
+                line[lineLength + 1] = '\0';
+                int textWidth = textwidth(line);
+
+                if (textWidth > maxWidth || input[i] == '\0')
+                {
+                    if (textWidth > maxWidth)
+                    {
+                        line[lineLength] = '\0';
+                        outtextxy(x, y, line);
+                        y += lineHeight;
+                        line[0] = input[i];
+                        line[1] = '\0';
+                        lineLength = 1;
+                        lineCount++;
+                    }
+                    else
+                    {
+                        outtextxy(x, y, line);
+                        lastLineX = x + textwidth(line);
+                        lastLineY = y;
+                    }
+
+                    if (input[i] == '\0') break;
+
+                    if (textWidth <= maxWidth)
+                    {
+                        y += lineHeight;
+                        line[0] = '\0';
+                        lineLength = 0;
+                        lineCount++;
+                    }
                 }
                 else
                 {
-                    outtextxy(x, y, line);
-                }
-
-                if (input[i] == '\0')
-                    break;
-
-                if (textWidth > maxWidth == false)
-                {
-                    y += textheight(const_cast<char*>("A")) + 5;
-                    line[0] = '\0';
-                    lineLength = 0;
+                    lineLength++;
+                    lastLineX = x + textwidth(line);
+                    lastLineY = y;
                 }
             }
-            else
+
+            // Draw rectangle
+            int rectTop = startY - 10;
+            int rectBottom = startY + lineCount * lineHeight + 5;
+            setcolor(WHITE);
+            rectangle(startX - 10, rectTop, startX + maxWidth + 10, rectBottom);
+        }
+
+        // Blinking cursor logic
+        cursorBlinkTimer++;
+        if (cursorBlinkTimer >= 10)
+        {
+            showCursor = !showCursor;
+            cursorBlinkTimer = 0;
+
+            // Draw or erase cursor without touching text
+            setfillstyle(SOLID_FILL, BLACK);
+            bar(lastLineX, lastLineY, lastLineX + 10, lastLineY + lineHeight);
+
+            if (showCursor)
             {
-                lineLength++;
+                setcolor(LIGHTCYAN);
+                outtextxy(lastLineX, lastLineY, (char *)"|");
+                setcolor(WHITE);
             }
         }
+
+        delay(50);
     }
+
     // Save to file
     FILE *fp = fopen("file/custom.txt", "w");
     if (fp != NULL)
     {
-        char *token = strtok(input, " "); // Split by space
+        char *token = strtok(input, " ");
         while (token != NULL)
         {
-            fprintf(fp, "%s\n", token); // Write one word per line
+            fprintf(fp, "%s\n", token);
             token = strtok(NULL, " ");
         }
         fclose(fp);
     }
 
-    outtextxy(100, 200, (char *)"Custom words saved!");
+    // Clear cursor
+    setfillstyle(SOLID_FILL, BLACK);
+    bar(lastLineX, lastLineY, lastLineX + 10, lastLineY + lineHeight);
+
+    // Final message
+    int messageY = startY + lineCount * lineHeight + 30;
+    setcolor(WHITE);
+    outtextxy(200, messageY, (char *)"Custom words loaded!");
     delay(1000);
 }
 
