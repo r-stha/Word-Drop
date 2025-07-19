@@ -17,8 +17,7 @@ using namespace std;
 
 int allowedColors[] = {
     GREEN, CYAN, RED, MAGENTA, BROWN, LIGHTGRAY,
-    DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, WHITE
-};
+    DARKGRAY, LIGHTBLUE, LIGHTGREEN, LIGHTCYAN, LIGHTRED, LIGHTMAGENTA, WHITE};
 
 struct Word
 {
@@ -35,9 +34,7 @@ struct HighScore
 };
 
 vector<HighScore> highScores;
-
 vector<string> dictionary;
-
 vector<Word> words;
 
 string typed = "";
@@ -111,7 +108,8 @@ void playSound(const char *filename)
     PlaySoundA(filename, NULL, SND_FILENAME | SND_ASYNC);
 }
 
-void stopSound() {
+void stopSound()
+{
     PlaySoundA(NULL, 0, 0);
 }
 
@@ -120,10 +118,13 @@ string getRandomWord()
     return dictionary[rand() % dictionary.size()];
 }
 
-int countMatchingPrefix(const std::string& typed, const std::string& actual) {
+int countMatchingPrefix(const std::string &typed, const std::string &actual)
+{
     int len = std::min(typed.size(), actual.size());
-    for (int i = 0; i < len; ++i) {
-        if (tolower(typed[i]) != tolower(actual[i])) {
+    for (int i = 0; i < len; ++i)
+    {
+        if (tolower(typed[i]) != tolower(actual[i]))
+        {
             return i; // mismatch happened here
         }
     }
@@ -167,7 +168,8 @@ void drawWords()
     settextstyle(BOLD_FONT, HORIZ_DIR, 3);
     for (int i = words.size() - 1; i >= 0; --i)
     {
-        if (!words[i].active) continue;
+        if (!words[i].active)
+            continue;
         words[i].y += fallSpeed;
 
         string full = words[i].text;
@@ -212,35 +214,15 @@ void drawWords()
     }
 }
 
-
-//no need of this function
-void removeMatchedWord()
-{
-    for (int i = words.size() - 1; i >= 0; --i) {
-        if (words[i].active && words[i].text == typed) {
-            playSound("resources/correct.wav");
-            score++;
-            if (health < 5) health++;
-            words.erase(words.begin() + i);
-            typed = "";
-            return;
-        }
-    }
-
-    playSound("resources/wrong.wav");
-    health--;   // Decrease health if no match
-    typed = ""; // Clear typed text on mismatch
-}
-
 // Returns true if `typed` is a prefix of `w`
-bool isPrefix(const string& typed, const string& w)
+bool isPrefix(const string &typed, const string &w)
 {
     return w.size() >= typed.size() &&
            equal(typed.begin(), typed.end(), w.begin());
 }
 
 // Returns the index of a word that exactly matches `typed`, –1 if none
-int findExactMatch(const string& typed)
+int findExactMatch(const string &typed)
 {
     for (int i = 0; i < (int)words.size(); ++i)
         if (words[i].active && words[i].text == typed)
@@ -253,7 +235,8 @@ void acceptWord(int index)
     playSound("resources/correct.wav");
     score++;
     currentStrick++;
-    if (health < 5) health++;          // reward a life
+    if (health < 5)
+        health++; // reward a life
     words.erase(words.begin() + index);
     typed.clear();
 }
@@ -309,8 +292,6 @@ void resetGame()
 
 void showPauseScreen()
 {
-    // std::cout << "currentStrick: " << currentStrick << std::endl;
-    // std::cout << "longestStrick: " << longestStrick << std::endl;
     setcolor(LIGHTBLUE);
     settextstyle(BOLD_FONT, HORIZ_DIR, 3);
     outtextxy(screenWidth / 2 - 80, screenHeight / 2, (char *)"PAUSED");
@@ -322,6 +303,14 @@ int showHighScores()
 {
     setcolor(YELLOW);
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 3);
+
+    if(highScores.empty())
+    {
+        outtextxy(screenWidth / 2 - 200, 160, (char *)"No High Scores Yet!");
+        settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
+        return 200; // Return a default y position
+    }
+
     outtextxy(screenWidth / 2 - 150, 160, (char *)"High Scores:");
 
     settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
@@ -336,25 +325,29 @@ int showHighScores()
     return y;
 }
 
-void showGameOverScreen()
+void showGameOverScreen(void *gameOverBg)
 {
+    // Load and show background image
+    putimage(0, 0, gameOverBg, COPY_PUT);
+
     setcolor(RED);
     settextstyle(BOLD_FONT, HORIZ_DIR, 5);
-    outtextxy(screenWidth / 2 - 150, 100, (char *)"!!!GAME OVER!!!");
 
-    int y = showHighScores();
+    int y = showHighScores(); // displays top scores
 
+    // Score
     char buffer[100];
     sprintf(buffer, "Your Score: %d", score);
     outtextxy(screenWidth / 2 - 150, y + 20, buffer);
 
+    // Accuracy
     float accuracy = 0;
-    if(totalKeystrokes > 0)
+    if (totalKeystrokes > 0)
         accuracy = (correctKeystrokes * 100.0f) / totalKeystrokes;
-    
-    if(accuracy > 90)
+
+    if (accuracy > 90)
         setcolor(GREEN);
-    else if(accuracy > 70)
+    else if (accuracy > 70)
         setcolor(YELLOW);
     else
         setcolor(RED);
@@ -362,33 +355,49 @@ void showGameOverScreen()
     sprintf(buffer, "Accuracy: %.2f%%", accuracy);
     outtextxy(screenWidth / 2 - 150, y + 60, buffer);
 
+    // Longest Streak
     setcolor(YELLOW);
-    sprintf(buffer, "Longest Strick: %d words%", longestStrick);
+    sprintf(buffer, "Longest Streak: %d words", longestStrick);
     outtextxy(screenWidth / 2 - 150, y + 100, buffer);
 
+    // Restart message
     outtextxy(screenWidth / 2 - 150, y + 140, (char *)"Press 'R' to Restart");
+    outtextxy(screenWidth / 2 - 150, y + 180, (char *)"Press 'Esc' to Quit");
 }
 
 void handleTyping()
 {
-    while (kbhit())           // read *all* queued keys
+    while (kbhit()) // read *all* queued keys
     {
         char ch = getch();
         // global hot‑keys first
-        if (ch == ' ') { paused = !paused; continue; }
-        if (ch == 27)  { exit(0); }          // ESC
-        if ((ch == 'r' || ch == 'R') && gameOver) {
-            restartRequested = true; continue;
+        if (ch == ' ')
+        {
+            paused = !paused;
+            continue;
+        }
+        if (ch == 27)
+        {
+            exit(0);
+        } // ESC
+        if ((ch == 'r' || ch == 'R') && gameOver)
+        {
+            restartRequested = true;
+            continue;
         }
 
-        if (paused || gameOver) continue;    // ignore other keys
+        if (paused || gameOver)
+            continue; // ignore other keys
 
         /* --- text input --- */
-        if (ch == '\b') {                    // back‑space
-            if (!typed.empty()) typed.pop_back();
+        if (ch == '\b')
+        { // back‑space
+            if (!typed.empty())
+                typed.pop_back();
         }
-        else if (isalpha(ch)) {            
-            totalKeystrokes++;    // count every keystroke
+        else if (isalpha(ch))
+        {
+            totalKeystrokes++; // count every keystroke
             typed += ch;
         }
 
@@ -396,7 +405,8 @@ void handleTyping()
 
         // 3‑a) exact word finished?
         int idx = findExactMatch(typed);
-        if (idx != -1) {                     // typed matches a word
+        if (idx != -1)
+        {                                        // typed matches a word
             correctKeystrokes += typed.length(); // count correct keystrokes
             acceptWord(idx);
             continue;
@@ -404,15 +414,19 @@ void handleTyping()
 
         // 3‑b) still a prefix of at least one word?
         bool stillValid = false;
-        for (auto& w : words)
-            if (w.active && isPrefix(typed, w.text)) {
+        for (auto &w : words)
+            if (w.active && isPrefix(typed, w.text))
+            {
                 stillValid = true;
                 break;
             }
 
-        if (!stillValid && !typed.empty()) { // typed can never match
-            for (auto& w : words) {
-                if (w.active) {
+        if (!stillValid && !typed.empty())
+        { // typed can never match
+            for (auto &w : words)
+            {
+                if (w.active)
+                {
                     int matchLen = countMatchingPrefix(typed, w.text);
                     correctKeystrokes += matchLen;
                     break; // only apply to first matching word
@@ -430,47 +444,64 @@ void handleTyping()
 
 void playOpeningTransition()
 {
-    // int currentPage = 0;
+    // Prepare background buffer
+    void *bgBuffer = malloc(imagesize(0, 0, screenWidth, screenHeight));
+    readimagefile("resources/background.bmp", 0, 0, screenWidth, screenHeight);
+    getimage(0, 0, screenWidth, screenHeight, bgBuffer);
 
-    for (int i = 0; i < screenWidth; i += 20) {
+    // Start with black screen
+    setbkcolor(BLACK);
+    cleardevice();
+
+    const int barHeight = 20;
+
+    for (int i = screenHeight; i >= 0; i -= barHeight)
+    {
         setactivepage(currentPage);
         setvisualpage(1 - currentPage);
 
-        cleardevice();
-        for (int j = 0; j <= i; j += 20) {
-            setfillstyle(SOLID_FILL, LIGHTCYAN);
-            bar(j, 0, j + 20, screenHeight);
-        }
+        putimage(0, 0, bgBuffer, COPY_PUT); // draw full background
 
-        delay(10);
+        // draw black bars from bottom upwards
+        setfillstyle(SOLID_FILL, BLACK);
+        bar(0, i, screenWidth, screenHeight);
+
+        delay(20);
         currentPage = 1 - currentPage;
     }
 
-    // After transition, show final frame
+    // Show final full frame
     setactivepage(0);
     setvisualpage(0);
+    putimage(0, 0, bgBuffer, COPY_PUT);
+
+    free(bgBuffer);
 }
 
 void runGame()
 {
     cleardevice();
-    loadWordsFromFile("file/words.txt");
+
+    void *gameOverBg = malloc(imagesize(0, 0, screenWidth, screenHeight));
+    readimagefile("resources/game_over.bmp", 0, 0, screenWidth, screenHeight);
+    getimage(0, 0, screenWidth, screenHeight, gameOverBg);
 
     const int totalFrames = 30; // update based on how many frames you extracted
-    std::vector<void*> bgFrames;
+    std::vector<void *> bgFrames;
 
-    for (int i = 0; i < totalFrames; ++i) {
+    for (int i = 0; i < totalFrames; ++i)
+    {
         char filename[100];
         sprintf(filename, "resources/frames/frame_%03d.bmp", i);
         readimagefile(filename, 0, 0, screenWidth, screenHeight);
-        void* frame = malloc(imagesize(0, 0, screenWidth, screenHeight));
+        void *frame = malloc(imagesize(0, 0, screenWidth, screenHeight));
         getimage(0, 0, screenWidth, screenHeight, frame);
         bgFrames.push_back(frame);
     }
 
     srand(time(0));
-    setbkcolor(BLACK);                        // black background
-    setcolor(WHITE);                          // white text
+    setbkcolor(BLACK);                           // black background
+    setcolor(WHITE);                             // white text
     settextstyle(SANS_SERIF_FONT, HORIZ_DIR, 2); // readable size
     do
     {
@@ -487,8 +518,6 @@ void runGame()
 
             if (!paused && !gameOver)
             {
-                // cleardevice();
-                
                 drawHUD();
                 drawWords();
                 spawnNewWords();
@@ -501,7 +530,6 @@ void runGame()
             }
             else
             {
-                // cleardevice();
                 drawHUD();
 
                 if (paused)
@@ -510,7 +538,7 @@ void runGame()
                 }
                 else if (gameOver)
                 {
-                    showGameOverScreen();
+                    showGameOverScreen(gameOverBg);
                 }
             }
 
@@ -568,8 +596,314 @@ void runGame()
         }
 
     } while (restartRequested);
-    for (auto frame : bgFrames) {
+    for (auto frame : bgFrames)
+    {
         free(frame);
     }
     closegraph();
+}
+
+void userInput()
+{
+    setcolor(WHITE);
+    settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
+    outtextxy(50, 100, (char *)"Enter your custom sentence (press Enter to finish):");
+
+    char input[1000];
+    int index = 0;
+    input[0] = '\0';
+
+    // Layout
+    int startX = 100, startY = 150;
+    int maxWidth = 650;
+    int lineHeight = textheight((char *)"A") + 5;
+    int maxLines = 10;
+
+    int lineCount = 1;
+    int prevIndex = -1; // To track changes
+    bool showCursor = true;
+    int cursorBlinkTimer = 0;
+
+    int lastLineX = startX;
+    int lastLineY = startY;
+
+    while (true)
+    {
+        // Handle input
+        if (kbhit())
+        {
+            char ch = getch();
+            if (ch == 13)
+            {
+                input[index] = '\0';
+                break;
+            }
+            else if (ch == 8 && index > 0)
+            {
+                index--;
+                input[index] = '\0';
+            }
+            else if (index < 999 && ch >= 32 && ch <= 126)
+            {
+                input[index++] = ch;
+                input[index] = '\0';
+            }
+        }
+
+        // Check if input changed
+        if (index != prevIndex)
+        {
+            prevIndex = index;
+
+            // Clear full region
+            setfillstyle(SOLID_FILL, BLACK);
+            bar(startX - 12, startY - 12, startX + maxWidth + 12, startY + maxLines * lineHeight + 20);
+
+            // Multiline render
+            int x = startX, y = startY;
+            lineCount = 1;
+            char line[1000] = "";
+            int lineLength = 0;
+
+            for (int i = 0; i <= index; ++i)
+            {
+                line[lineLength] = input[i];
+                line[lineLength + 1] = '\0';
+                int textWidth = textwidth(line);
+
+                if (textWidth > maxWidth || input[i] == '\0')
+                {
+                    if (textWidth > maxWidth)
+                    {
+                        line[lineLength] = '\0';
+                        outtextxy(x, y, line);
+                        y += lineHeight;
+                        line[0] = input[i];
+                        line[1] = '\0';
+                        lineLength = 1;
+                        lineCount++;
+                    }
+                    else
+                    {
+                        outtextxy(x, y, line);
+                        lastLineX = x + textwidth(line);
+                        lastLineY = y;
+                    }
+
+                    if (input[i] == '\0') break;
+
+                    if (textWidth <= maxWidth)
+                    {
+                        y += lineHeight;
+                        line[0] = '\0';
+                        lineLength = 0;
+                        lineCount++;
+                    }
+                }
+                else
+                {
+                    lineLength++;
+                    lastLineX = x + textwidth(line);
+                    lastLineY = y;
+                }
+            }
+
+            // Draw rectangle
+            int rectTop = startY - 10;
+            int rectBottom = startY + lineCount * lineHeight + 5;
+            setcolor(WHITE);
+            rectangle(startX - 10, rectTop, startX + maxWidth + 10, rectBottom);
+        }
+
+        // Blinking cursor logic
+        cursorBlinkTimer++;
+        if (cursorBlinkTimer >= 10)
+        {
+            showCursor = !showCursor;
+            cursorBlinkTimer = 0;
+
+            // Draw or erase cursor without touching text
+            setfillstyle(SOLID_FILL, BLACK);
+            bar(lastLineX, lastLineY, lastLineX + 10, lastLineY + lineHeight);
+
+            if (showCursor)
+            {
+                setcolor(LIGHTCYAN);
+                outtextxy(lastLineX, lastLineY, (char *)"|");
+                setcolor(WHITE);
+            }
+        }
+
+        delay(50);
+    }
+
+    // Save to file
+    FILE *fp = fopen("file/custom.txt", "w");
+    if (fp != NULL)
+    {
+        char *token = strtok(input, " ");
+        while (token != NULL)
+        {
+            fprintf(fp, "%s\n", token);
+            token = strtok(NULL, " ");
+        }
+        fclose(fp);
+    }
+
+    // Clear cursor
+    setfillstyle(SOLID_FILL, BLACK);
+    bar(lastLineX, lastLineY, lastLineX + 10, lastLineY + lineHeight);
+
+    // Final message
+    int messageY = startY + lineCount * lineHeight + 30;
+    setcolor(WHITE);
+    outtextxy(200, messageY, (char *)"Custom words loaded!");
+    delay(1000);
+}
+
+void drawSelectionMenu(int hoverIndex = -1)
+{
+    // cleardevice(); // Clear screen before drawing menu
+
+    setcolor(GREEN);
+    settextstyle(BOLD_FONT, HORIZ_DIR, 4);
+    outtextxy(220, 100, (char *)"TYPING SPEED GAME");
+
+    int x = 250, width = 270, height = 40;
+    int y1 = 180, gap = 50;
+
+    const char *labels[] = {
+        "1. Random Words",
+        "2. Custom Words",
+        "3. Back",
+        "4. Exit"};
+
+    for (int i = 0; i < 4; ++i)
+    {
+        int y = y1 + i * gap;
+
+        // Highlight hovered option
+        if (i == hoverIndex)
+            setcolor(RED);
+        else
+            setcolor(WHITE);
+
+        setfillstyle(SOLID_FILL, BLACK);
+        bar(x, y, x + width, y + height);
+
+        settextstyle(DEFAULT_FONT, HORIZ_DIR, 2);
+        outtextxy(x + 10, y + 10, (char *)labels[i]);
+    }
+}
+
+void showSelectionMenu()
+{
+    SelectionState state = MAINMENU;
+    int hover = -1;
+    bool redraw = true; 
+
+    void* bgBuffer = malloc(imagesize(0, 0, 800, 600));
+    readimagefile("resources/menu_background.bmp", 0, 0, 800, 600);
+    getimage(0, 0, 800, 600, bgBuffer);
+
+    while (state != QUIT)
+    {
+        if (redraw)
+        {
+            putimage(0, 0, bgBuffer, COPY_PUT);
+            drawSelectionMenu(hover);
+            redraw = false;
+        }
+
+        // Mouse movement detection
+        if (ismouseclick(WM_MOUSEMOVE))
+        {
+            int mx, my;
+            getmouseclick(WM_MOUSEMOVE, mx, my);
+
+            int newHover = -1;
+            int x = 250, width = 270, height = 40, y1 = 180, gap = 50;
+            for (int i = 0; i < 4; ++i)
+            {
+                int y = y1 + i * gap;
+                if (mx >= x && mx <= x + width && my >= y && my <= y + height)
+                {
+                    newHover = i;
+                    break;
+                }
+            }
+
+            if (newHover != hover)
+            {
+                hover = newHover;
+                redraw = true;
+            }
+        }
+
+        // Redraw on hover change
+        if (redraw)
+        {
+            drawSelectionMenu(hover);
+        }
+
+        // Mouse click
+        if (ismouseclick(WM_LBUTTONDOWN))
+        {
+            int mx, my;
+            getmouseclick(WM_LBUTTONDOWN, mx, my);
+
+            int x = 250, width = 270, height = 40, y1 = 180, gap = 50;
+            for (int i = 0; i < 4; ++i)
+            {
+                int y = y1 + i * gap;
+                if (mx >= x && mx <= x + width && my >= y && my <= y + height)
+                {
+                    state = static_cast<SelectionState>(i + 1);
+                    break;
+                }
+            }
+        }
+
+        // Keyboard fallback
+        if (kbhit())
+        {
+            char ch = getch();
+            if (ch == '1')
+                state = RANDOM;
+            else if (ch == '2')
+                state = CUSTOM;
+            else if (ch == '3')
+                state = BACK;
+            else if (ch == '4' || ch == 27)
+                state = QUIT;
+        }
+
+        // Handle selected state
+        if (state == RANDOM)
+        {
+            cleardevice();
+            loadWordsFromFile("file/words.txt");
+            runGame();
+            state = MAINMENU;
+        }
+        else if (state == CUSTOM)
+        {
+            cleardevice();
+            userInput();
+            loadWordsFromFile("file/custom.txt");
+            runGame();
+            state = MAINMENU;
+        }
+        else if (state == BACK)
+        {
+            free(bgBuffer);
+            return;
+        }
+        else if (state == QUIT)
+        {
+            exit(0);
+        }
+
+        delay(30);
+    }
 }
